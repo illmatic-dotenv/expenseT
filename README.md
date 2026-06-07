@@ -1,4 +1,4 @@
-# TrackEx 💸 — Smart Expense Tracker
+# TrackEx — Smart Expense Tracker
 
 > Exercise 2: Mini Expense Tracker — Studio Graphene Full Stack Developer Assessment
 
