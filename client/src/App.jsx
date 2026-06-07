@@ -128,7 +128,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-brand">
-          <h1>TrackEx 💸</h1>
+          <h1>TrackEx</h1>
         </div>
         <div className="header-right">
           <div className="currency-selector">
