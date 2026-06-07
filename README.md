@@ -8,8 +8,8 @@ TrackEx is a full stack expense tracking application that lets users log daily s
 
 ## Live Demo
 
-- **Frontend (Vercel):** https://your-app.vercel.app
-- **Backend API (Render):** https://your-backend.onrender.com
+- **Frontend (Vercel):** https://expense-t-nine.vercel.app/
+- **Backend API (Render):** https://trackex-backend-x9xk.onrender.com
 
 ---
 
