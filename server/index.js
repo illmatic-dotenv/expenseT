@@ -9,7 +9,7 @@ const expenseRoutes = require('./routes/expenseRoutes')
 const app = express()
 
 // Set the port number our server will listen on
-const PORT = 5000
+const PORT = process.env.PORT || 5000
 
 // MIDDLEWARE SECTION
 // Middleware runs on every single request before it reaches our routes
