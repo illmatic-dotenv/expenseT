@@ -1,12 +1,10 @@
 // api.js — All communication with the backend lives here
 // Every component that needs data calls a function from this file
-// This means if the backend URL ever changes, we only update one file
 
 import axios from 'axios'
 
-// The base URL of our backend server
-// All our API calls will start with this address
-const BASE_URL = 'http://localhost:5000/api/expenses'
+// The backend URL — points to our deployed Render server
+const BASE_URL = 'https://trackex-backend-x9xk.onrender.com/api/expenses'
 
 // Fetch all expenses from the backend
 export function getAllExpenses() {
@@ -19,7 +17,6 @@ export function getSummary() {
 }
 
 // Create a new expense
-// expenseData is an object like { amount, category, date, note }
 export function createExpense(expenseData) {
   return axios.post(BASE_URL, expenseData)
 }
