@@ -1,7 +1,3 @@
-// App.jsx — Main component
-// selectedMonth controls which month ALL components display data for
-// Changing the month picker updates Summary, Budget, Charts, and Health Score
-
 import { useState, useEffect } from 'react'
 import ExpenseForm from './components/ExpenseForm'
 import ExpenseTable from './components/ExpenseTable'
@@ -15,8 +11,7 @@ import { getAllExpenses, getSummary, createExpense, updateExpense, deleteExpense
 import './index.css'
 
 function App() {
-
-  const { selectedCurrency, changeCurrency } = useCurrency()
+  const { selectedCurrency, changeCurrency, formatAmount } = useCurrency()
 
   const [expenses, setExpenses] = useState([])
   const [summary, setSummary] = useState(null)
@@ -24,33 +19,32 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Dark mode state — reads from localStorage so it persists
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true'
+  })
+
   const [filters, setFilters] = useState({
-    search: '',
-    category: '',
-    startDate: '',
-    endDate: ''
+    search: '', category: '', startDate: '', endDate: ''
   })
 
   const [budgets, setBudgets] = useState({
-    Food: 5000,
-    Transport: 3000,
-    Bills: 8000,
-    Entertainment: 2000,
-    Shopping: 4000,
-    Health: 3000,
-    Other: 2000
+    Food: 5000, Transport: 3000, Bills: 8000,
+    Entertainment: 2000, Shopping: 4000, Health: 3000, Other: 2000
   })
 
-  // selectedMonth controls the dashboard view — format is "YYYY-MM"
-  // Defaults to the current month
   function getCurrentMonth() {
     const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    return `${year}-${month}`
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   }
 
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+
+  // Apply dark mode to the HTML element whenever it changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('darkMode', darkMode)
+  }, [darkMode])
 
   async function fetchExpenses() {
     try {
@@ -66,9 +60,7 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    fetchExpenses()
-  }, [])
+  useEffect(() => { fetchExpenses() }, [])
 
   async function handleFormSubmit(expenseData) {
     try {
@@ -80,7 +72,7 @@ function App() {
       }
       fetchExpenses()
     } catch (err) {
-      setError('Failed to save expense. Please try again.')
+      setError('Failed to save expense.')
     }
   }
 
@@ -94,119 +86,66 @@ function App() {
       await deleteExpense(id)
       fetchExpenses()
     } catch (err) {
-      setError('Failed to delete expense. Please try again.')
+      setError('Failed to delete expense.')
     }
   }
 
-  // Filter expenses shown in the table (uses the filter bar, not the month selector)
   function getFilteredExpenses() {
     let filtered = expenses
-
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
-      filtered = filtered.filter((expense) =>
-        expense.note && expense.note.toLowerCase().includes(searchLower)
-      )
+      filtered = filtered.filter(e => e.note && e.note.toLowerCase().includes(searchLower))
     }
-
-    if (filters.category) {
-      filtered = filtered.filter((expense) => expense.category === filters.category)
-    }
-
-    if (filters.startDate) {
-      filtered = filtered.filter((expense) => expense.date >= filters.startDate)
-    }
-
-    if (filters.endDate) {
-      filtered = filtered.filter((expense) => expense.date <= filters.endDate)
-    }
-
+    if (filters.category) filtered = filtered.filter(e => e.category === filters.category)
+    if (filters.startDate) filtered = filtered.filter(e => e.date >= filters.startDate)
+    if (filters.endDate) filtered = filtered.filter(e => e.date <= filters.endDate)
     return filtered
   }
 
-  // Filter expenses for the dashboard panels by the selected month
-  // e.g. selectedMonth = "2025-06" keeps only expenses from June 2025
   function getMonthlyExpenses() {
-    return expenses.filter((expense) =>
-      expense.date.startsWith(selectedMonth)
-    )
+    return expenses.filter(e => e.date.startsWith(selectedMonth))
+  }
+
+  function calculateMonthlySummary() {
+    const monthly = getMonthlyExpenses()
+    if (monthly.length === 0) return { totalAmount: 0, totalTransactions: 0, highestExpense: 0, categoryTotals: {} }
+    let totalAmount = 0
+    let highestExpense = 0
+    const categoryTotals = {}
+    for (const expense of monthly) {
+      totalAmount += expense.amount
+      if (expense.amount > highestExpense) highestExpense = expense.amount
+      categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount
+    }
+    return { totalAmount, totalTransactions: monthly.length, highestExpense, categoryTotals }
   }
 
   const filteredExpenses = getFilteredExpenses()
   const monthlyExpenses = getMonthlyExpenses()
-
-  // Calculate summary stats fresh from monthlyExpenses on the frontend
-  // This avoids an extra API call every time the month changes
-  function calculateMonthlySummary() {
-    if (monthlyExpenses.length === 0) {
-      return {
-        totalAmount: 0,
-        totalTransactions: 0,
-        highestExpense: 0,
-        categoryTotals: {}
-      }
-    }
-
-    let totalAmount = 0
-    for (const expense of monthlyExpenses) {
-      totalAmount += expense.amount
-    }
-
-    let highestExpense = 0
-    for (const expense of monthlyExpenses) {
-      if (expense.amount > highestExpense) {
-        highestExpense = expense.amount
-      }
-    }
-
-    const categoryTotals = {}
-    for (const expense of monthlyExpenses) {
-      if (categoryTotals[expense.category]) {
-        categoryTotals[expense.category] += expense.amount
-      } else {
-        categoryTotals[expense.category] = expense.amount
-      }
-    }
-
-    return {
-      totalAmount,
-      totalTransactions: monthlyExpenses.length,
-      highestExpense,
-      categoryTotals
-    }
-  }
-
   const monthlySummary = calculateMonthlySummary()
 
   return (
     <div className="app">
-
       <header className="app-header">
-        <div className="header-top">
-          <div className="header-brand">
-            <h1>TrackEx</h1>
-            <p>track your life expenses with us</p>
+        <div className="header-brand">
+          <h1>TrackEx 💸</h1>
+        </div>
+        <div className="header-right">
+          <div className="currency-selector">
+            <label>Currency</label>
+            <select value={selectedCurrency.code} onChange={e => changeCurrency(e.target.value)}>
+              {CURRENCIES.map(c => (
+                <option key={c.code} value={c.code}>{c.symbol} {c.label}</option>
+              ))}
+            </select>
           </div>
-          <div className="header-controls">
-            <div className="currency-selector">
-              <label>Currency</label>
-              <select
-                value={selectedCurrency.code}
-                onChange={(e) => changeCurrency(e.target.value)}
-              >
-                {CURRENCIES.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.symbol} {currency.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <button className="dark-toggle" onClick={() => setDarkMode(!darkMode)}>
+            {darkMode ? '☀️' : '🌙'}
+          </button>
         </div>
       </header>
 
       <main className="app-main">
-
         {error && (
           <div className="error-banner">
             {error}
@@ -214,43 +153,133 @@ function App() {
           </div>
         )}
 
-        {/* Add / Edit form — always visible */}
-        <ExpenseForm
-          onSubmit={handleFormSubmit}
-          editingExpense={editingExpense}
-          onCancelEdit={() => setEditingExpense(null)}
-        />
+        {/* Stats row — 4 cards across the top */}
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon red">💸</div>
+            <div className="stat-info">
+              <div className="stat-label">Total Spent</div>
+              <div className="stat-value">{formatAmount(monthlySummary.totalAmount)}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon blue">📋</div>
+            <div className="stat-info">
+              <div className="stat-label">Transactions</div>
+              <div className="stat-value">{monthlySummary.totalTransactions}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon amber">⬆️</div>
+            <div className="stat-info">
+              <div className="stat-label">Highest Expense</div>
+              <div className="stat-value">{formatAmount(monthlySummary.highestExpense)}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon green">📅</div>
+            <div className="stat-info">
+              <div className="stat-label">Viewing Month</div>
+              <div className="stat-value" style={{ fontSize: '1rem' }}>
+                {new Date(selectedMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* Month selector — controls all dashboard panels below */}
-        <MonthSelector
-          selectedMonth={selectedMonth}
-          onMonthChange={setSelectedMonth}
-          expenses={expenses}
-        />
+        {/* Add expense form */}
+        <div className="card full-width">
+          <div className="card-header">
+            <div className="card-title">
+              <div className="card-title-icon">➕</div>
+              {editingExpense ? 'Edit Expense' : 'Add New Expense'}
+            </div>
+            {editingExpense && (
+              <button className="btn-secondary btn-sm" onClick={() => setEditingExpense(null)}>
+                Cancel Edit
+              </button>
+            )}
+          </div>
+          <div className="card-body">
+            <ExpenseForm
+              onSubmit={handleFormSubmit}
+              editingExpense={editingExpense}
+              onCancelEdit={() => setEditingExpense(null)}
+            />
+          </div>
+        </div>
 
-        {/* All panels below use monthlyExpenses, not all expenses */}
-        <SummaryPanel
-          summary={monthlySummary}
-          budgets={budgets}
-          setBudgets={setBudgets}
-        />
+        {/* Month selector */}
+        <div className="card full-width">
+          <div className="card-header">
+            <div className="card-title">
+              <div className="card-title-icon">📅</div>
+              Dashboard Period
+            </div>
+          </div>
+          <div className="card-body">
+            <MonthSelector
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
+              expenses={expenses}
+            />
+          </div>
+        </div>
 
-        <Charts expenses={monthlyExpenses} />
+        {/* Charts row */}
+        <div className="two-col">
+          <Charts expenses={monthlyExpenses} />
+          <SummaryPanel summary={monthlySummary} budgets={budgets} setBudgets={setBudgets} />
+        </div>
 
-        <HealthScore expenses={monthlyExpenses} budgets={budgets} />
+        {/* Budget and Health Score */}
+        <div className="two-col">
+          <HealthScore expenses={monthlyExpenses} budgets={budgets} />
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">
+                <div className="card-title-icon">🎯</div>
+                Budget Tracker
+              </div>
+            </div>
+            <div className="card-body">
+              <p className="budget-subtitle">Set monthly budgets and track spending</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Table uses its own filter bar — independent of month selector */}
-        <Filters filters={filters} onFilterChange={setFilters} />
+        {/* Filters and table */}
+        <div className="card full-width">
+          <div className="card-header">
+            <div className="card-title">
+              <div className="card-title-icon">🔍</div>
+              Filter Expenses
+            </div>
+          </div>
+          <div className="card-body">
+            <Filters filters={filters} onFilterChange={setFilters} />
+          </div>
+        </div>
 
-        {loading ? (
-          <div className="loading">Loading expenses...</div>
-        ) : (
-          <ExpenseTable
-            expenses={filteredExpenses}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )}
+        <div className="card full-width">
+          <div className="card-header">
+            <div className="card-title">
+              <div className="card-title-icon">📊</div>
+              All Expenses ({filteredExpenses.length})
+            </div>
+          </div>
+          <div className="card-body">
+            {loading ? (
+              <div className="loading">Loading expenses...</div>
+            ) : (
+              <ExpenseTable
+                expenses={filteredExpenses}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
+        </div>
 
       </main>
     </div>
