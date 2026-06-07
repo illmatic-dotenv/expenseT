@@ -1,0 +1,19 @@
+# Node modules — never commit these, they are installed via npm install
+node_modules/
+
+# SQLite database file — contains user data, should not be in version control
+server/database/expenses.db
+
+# Environment files — would contain secrets in a real app
+.env
+.env.local
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vite build output
+client/dist/
