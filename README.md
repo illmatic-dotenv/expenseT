@@ -1,6 +1,6 @@
 # TrackEx - Smart Expense Tracker
 
-Exercise 2: Mini Expense Tracker — Studio Graphene Full Stack Developer Assessment
+Exercise 2: Mini Expense Tracker : Studio Graphene Full Stack Developer Assessment
 
 TrackEx is a full stack expense tracking application that lets users log daily spending across categories, visualise where money is going, track budgets per category, and monitor financial health through a scored dashboard. Built with Node.js and Express on the backend, React on the frontend, and SQLite for persistent storage that survives server restarts.
 
