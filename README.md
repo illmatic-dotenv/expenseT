@@ -128,6 +128,7 @@ Fetch all expenses sorted by date descending.
 Request: No body required.
 
 Response 200 OK:
+```
 [
   {
     "id": 1,
@@ -139,6 +140,8 @@ Response 200 OK:
     "updated_at": "2025-06-01 12:00:00"
   }
 ]
+
+```
 
 ### GET /api/expenses/summary
 
