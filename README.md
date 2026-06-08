@@ -81,6 +81,7 @@ Open your browser and go to http://localhost:5173
 
 ## Project Structure
 
+```
 expenseT/
 ├── .gitignore
 ├── README.md
@@ -115,6 +116,7 @@ expenseT/
             ├── Filters.jsx
             ├── HealthScore.jsx
             └── MonthSelector.jsx
+```
 
 ## API Documentation
 
